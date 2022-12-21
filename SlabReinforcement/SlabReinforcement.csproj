@@ -164,6 +164,7 @@
     </When>
   </Choose>
   <ItemGroup>
+    <Compile Include="FloorSelectionFilter.cs" />
     <Compile Include="SlabReinforcementCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
