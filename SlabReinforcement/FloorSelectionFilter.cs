@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SlabReinforcement
 {
-    class FloorSelectionFilter
+    public class FloorSelectionFilter
     {
     }
 }
