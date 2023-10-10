@@ -1,17 +1,11 @@
-﻿using Accord.MachineLearning;
+﻿using Dbscan.RBush;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace SlabReinforcement
@@ -33,15 +27,20 @@ namespace SlabReinforcement
                 {
                     colorList.Add(wpfColor);
                 }
+                double centerX = pointItem.Point.X; 
+                double centerY = pointItem.Point.Y; 
+                double radiusX = 0.5; 
+                double radiusY = 0.5; 
+
                 Ellipse ellipse = new Ellipse
                 {
-                    Width = 1,
-                    Height = 1,
+                    Width = radiusX * 2,
+                    Height = radiusY * 2,
                     Fill = new SolidColorBrush(wpfColor),
                 };
 
-                Canvas.SetLeft(ellipse, pointItem.Point.X);
-                Canvas.SetTop(ellipse, pointItem.Point.Y);
+                Canvas.SetLeft(ellipse, centerX - radiusX);
+                Canvas.SetTop(ellipse, centerY - radiusY);
 
                 pointCanvas.Children.Add(ellipse);
             }
@@ -49,7 +48,7 @@ namespace SlabReinforcement
             List<ColorItem> colorItemsList = new List<ColorItem>();
             foreach (Color color in colorList)
             {
-                colorItemsList.Add(new ColorItem { Description = $"R{color.R}, G{color.G}, B{color.B}", Color = new SolidColorBrush(color)});
+                colorItemsList.Add(new ColorItem { Description = $"R{color.R}, G{color.G}, B{color.B}", Color = new SolidColorBrush(color) });
             }
 
             colorListBox.ItemsSource = colorItemsList;
@@ -67,24 +66,28 @@ namespace SlabReinforcement
                 if (findColorItem == null)
                 {
                     Color wpfColor = Color.FromRgb(pointItem.Color.Red, pointItem.Color.Green, pointItem.Color.Blue);
+                    double centerX = pointItem.Point.X;
+                    double centerY = pointItem.Point.Y;
+                    double radiusX = 0.5;
+                    double radiusY = 0.5;
+
                     Ellipse ellipse = new Ellipse
                     {
-                        Width = 1,
-                        Height = 1,
+                        Width = radiusX * 2,
+                        Height = radiusY * 2,
                         Fill = new SolidColorBrush(wpfColor),
                     };
 
-                    Canvas.SetLeft(ellipse, pointItem.Point.X);
-                    Canvas.SetTop(ellipse, pointItem.Point.Y);
+                    Canvas.SetLeft(ellipse, centerX - radiusX);
+                    Canvas.SetTop(ellipse, centerY - radiusY);
 
                     pointCanvas.Children.Add(ellipse);
                 }
             }
         }
-
         private void button_Click(object sender, RoutedEventArgs e)
         {
-            int numberOfClusters = 30;
+            //pointCanvas.Children.Clear();
             List<PointColorItem> pointColorItemFilteredList = new List<PointColorItem>();
             List<ColorItem> selectedColorsForIgnor = colorListBox.Items.Cast<ColorItem>().Where(ci => ci.IsSelected == true).ToList();
             foreach (PointColorItem pointItem in PointColorItemList)
@@ -98,61 +101,104 @@ namespace SlabReinforcement
                 }
             }
 
-            KMeans kmeans = new KMeans(numberOfClusters);
-            double[][] data = pointColorItemFilteredList.Select(item =>
+            IList<SimplePoint> data = pointColorItemFilteredList.Select(point => new SimplePoint(point.Point.X, point.Point.Y)).ToList();
+
+            var clusters = DbscanRBush.CalculateClusters(
+               data,
+               epsilon: 800 / 304.8,
+               minimumPointsPerCluster: 6);
+
+            // Создайте экземпляр класса Random
+            Random random = new Random();
+            for (int i = 0; i < clusters.Clusters.Count; i++)
             {
-                return new double[]
+                Dbscan.Cluster<SimplePoint> cluster = clusters.Clusters[i];
+                if (cluster.Objects.Count > 4)
                 {
-                    item.Point.X,
-                    item.Point.Y,
-                };
-            }).ToArray();
+                    byte red = (byte)random.Next(256);
+                    byte green = (byte)random.Next(256);
+                    byte blue = (byte)random.Next(256);
+                    Color randomColor = Color.FromRgb(red, green, blue);
+                    //foreach (SimplePoint p in cluster.Objects)
+                    //{
+                    //    double centerX = p.Point.X;
+                    //    double centerY = p.Point.Y;
+                    //    double radiusX = 0.5;
+                    //    double radiusY = 0.5;
 
-            KMeansClusterCollection clusters = kmeans.Learn(data);
-            int[] clusterAssignments = clusters.Decide(data);
+                    //    Ellipse ellipse = new Ellipse
+                    //    {
+                    //        Width = radiusX * 2,
+                    //        Height = radiusY * 2,
+                    //        Fill = new SolidColorBrush(randomColor),
+                    //    };
 
-            List<List<double[]>> clusteredPoints = new List<List<double[]>>();
-            for (int clusterIndex = 0; clusterIndex < numberOfClusters; clusterIndex++)
-            {
-                clusteredPoints.Add(new List<double[]>());
-            }
+                    //    Canvas.SetLeft(ellipse, centerX - radiusX);
+                    //    Canvas.SetTop(ellipse, centerY - radiusY);
 
-            for (int i = 0; i < data.Length; i++)
-            {
-                int clusterIndex = clusterAssignments[i];
-                clusteredPoints[clusterIndex].Add(data[i]);
-            }
+                    //    pointCanvas.Children.Add(ellipse);
+                    //}
 
-            foreach (List<double[]> pointCluster in clusteredPoints)
-            {
-                if (pointCluster.Count > 4)
-                {
-                    double minX = pointCluster.Min(p => p[0]);
-                    double minY = pointCluster.Min(p => p[1]);
-                    double maxX = pointCluster.Max(p => p[0]);
-                    double maxY = pointCluster.Max(p => p[1]);
+                    double minX = cluster.Objects.Min(p => p.Point.X);
+                    double minY = cluster.Objects.Min(p => p.Point.Y);
+                    double maxX = cluster.Objects.Max(p => p.Point.X);
+                    double maxY = cluster.Objects.Max(p => p.Point.Y);
 
-                    // Размеры прямоугольника
-                    double width = maxX - minX;
-                    double height = maxY - minY;
+                    Brush lineBrush = new SolidColorBrush(randomColor);
+                    double lineThickness = 1; // Толщина линии
 
-                    // Создаем Rectangle
-                    Rectangle rect = new Rectangle
-                    {
-                        Width = width,
-                        Height = height,
-                        Stroke = Brushes.Black,
-                        StrokeThickness = 2
-                    };
+                    // Создайте линии для каждой стороны прямоугольника
+                    Line topLine = new Line();
+                    topLine.X1 = minX;
+                    topLine.Y1 = minY;
+                    topLine.X2 = maxX;
+                    topLine.Y2 = minY;
+                    topLine.Stroke = lineBrush;
+                    topLine.StrokeThickness = lineThickness;
 
-                    // Устанавливаем координаты для прямоугольника
-                    Canvas.SetLeft(rect, minX);
-                    Canvas.SetTop(rect, minY);
+                    Line bottomLine = new Line();
+                    bottomLine.X1 = minX;
+                    bottomLine.Y1 = maxY;
+                    bottomLine.X2 = maxX;
+                    bottomLine.Y2 = maxY;
+                    bottomLine.Stroke = lineBrush;
+                    bottomLine.StrokeThickness = lineThickness;
 
-                    // Добавляем прямоугольник на Canvas
-                    pointCanvas.Children.Add(rect);
+                    Line leftLine = new Line();
+                    leftLine.X1 = minX;
+                    leftLine.Y1 = minY;
+                    leftLine.X2 = minX;
+                    leftLine.Y2 = maxY;
+                    leftLine.Stroke = lineBrush;
+                    leftLine.StrokeThickness = lineThickness;
+
+                    Line rightLine = new Line();
+                    rightLine.X1 = maxX;
+                    rightLine.Y1 = minY;
+                    rightLine.X2 = maxX;
+                    rightLine.Y2 = maxY;
+                    rightLine.Stroke = lineBrush;
+                    rightLine.StrokeThickness = lineThickness;
+
+                    // Добавьте линии на Canvas
+                    pointCanvas.Children.Add(topLine);
+                    pointCanvas.Children.Add(bottomLine);
+                    pointCanvas.Children.Add(leftLine);
+                    pointCanvas.Children.Add(rightLine);
                 }
             }
+        }
+        private void pointCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var matTrans = pointCanvas.RenderTransform as MatrixTransform;
+            var pos1 = e.GetPosition(canvasScrollViewer);
+
+            var scale = e.Delta > 0 ? 1.3 : 1 / 1.3;
+
+            var mat = matTrans.Matrix;
+            mat.ScaleAt(scale, scale, pos1.X, pos1.Y);
+            matTrans.Matrix = mat;
+            e.Handled = true;
         }
     }
 }

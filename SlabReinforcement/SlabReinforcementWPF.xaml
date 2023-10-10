@@ -3,8 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts" 
-             xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
              xmlns:local="clr-namespace:SlabReinforcement"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
@@ -16,16 +14,23 @@
             </StackPanel>
         </DataTemplate>
     </Window.Resources>
-    <Grid Margin="10">
+    <Grid x:Name="mainGrid" Margin="10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="400*"/>
             <ColumnDefinition Width="300"/>
         </Grid.ColumnDefinitions>
-        
-        <ScrollViewer Grid.Column="0" Margin="10">
-            <Canvas x:Name="pointCanvas"/>
+
+        <ScrollViewer x:Name="canvasScrollViewer">
+            <Canvas x:Name="pointCanvas" MouseWheel="pointCanvas_MouseWheel">
+                <Canvas.RenderTransform>
+                    <MatrixTransform/>
+                </Canvas.RenderTransform>
+                <Canvas.LayoutTransform>
+                    <ScaleTransform ScaleX="1" ScaleY="-1" CenterX=".5" CenterY=".5" />
+                </Canvas.LayoutTransform>
+            </Canvas>
         </ScrollViewer>
-        
+
         <ListBox x:Name="colorListBox" VerticalAlignment="Top" Width="280" Height="200" Grid.Column="1" Margin="10,5,10,0" ItemsSource="{Binding YourColorItems}" ItemTemplate="{StaticResource ColorItemTemplate}" />
         <Button x:Name="button" Content="Button" Grid.Column="1" HorizontalAlignment="Left" Margin="97,265,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
     </Grid>
