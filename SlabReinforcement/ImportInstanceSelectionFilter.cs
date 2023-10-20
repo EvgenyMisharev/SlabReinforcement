@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 
 namespace SlabReinforcement
 {
-	class FloorSelectionFilter : ISelectionFilter
-	{
+    class ImportInstanceSelectionFilter: ISelectionFilter
+    {
 		public bool AllowElement(Element elem)
 		{
 
-			if (elem is Floor)
+			if (elem is ImportInstance)
 			{
 				return true;
 			}

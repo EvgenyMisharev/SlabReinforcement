@@ -5,7 +5,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SlabReinforcement"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             Title='Армирование плит' Height="900" Width="865" 
+             MinHeight="900" MinWidth="865" MaxHeight="900" MaxWidth="865"
+             WindowStyle="SingleBorderWindow" Icon="Resources/citrus.ico" WindowStartupLocation="CenterScreen" KeyDown="SquareColumnsReinforcementAutoWPF_KeyDown">
     <Window.Resources>
         <DataTemplate x:Key="ColorItemTemplate">
             <StackPanel Orientation="Horizontal">
@@ -13,14 +15,20 @@
                 <TextBlock Text="{Binding Description}" Background="{Binding Color}"/>
             </StackPanel>
         </DataTemplate>
+        <local:ColorToBrushConverter x:Key="ColorToBrushConverter" />
     </Window.Resources>
     <Grid x:Name="mainGrid" Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="400"/>
+            <RowDefinition Height="200*"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="400*"/>
             <ColumnDefinition Width="300"/>
         </Grid.ColumnDefinitions>
 
-        <ScrollViewer x:Name="canvasScrollViewer">
+        <ScrollViewer x:Name="canvasScrollViewer" Margin="0,0,0,10">
             <Canvas x:Name="pointCanvas" MouseWheel="pointCanvas_MouseWheel">
                 <Canvas.RenderTransform>
                     <MatrixTransform/>
@@ -32,6 +40,27 @@
         </ScrollViewer>
 
         <ListBox x:Name="colorListBox" VerticalAlignment="Top" Width="280" Height="200" Grid.Column="1" Margin="10,5,10,0" ItemsSource="{Binding YourColorItems}" ItemTemplate="{StaticResource ColorItemTemplate}" />
-        <Button x:Name="button" Content="Button" Grid.Column="1" HorizontalAlignment="Left" Margin="97,265,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
+        <Button x:Name="button_CreateClusters" Content="Создать участки" Grid.Column="1" HorizontalAlignment="Left" Margin="10,266,0,0" VerticalAlignment="Top" Width="120" Click="button_Click" Height="25"/>
+        <TextBox x:Name="textBox_Epsilon" Grid.Column="1" HorizontalAlignment="Left" Height="25" Margin="10,210,0,0" TextWrapping="Wrap" Text="600" VerticalAlignment="Top" Width="120" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+        <TextBox x:Name="textBox_MinimumPointsPerCluster" Grid.Column="1" HorizontalAlignment="Left" Height="25" Margin="10,238,0,0" TextWrapping="Wrap" Text="6" VerticalAlignment="Top" Width="120" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+
+        <DataGrid x:Name="dataGrid" AutoGenerateColumns="False" Grid.Row="1" Grid.ColumnSpan="2" CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="ClusterColor" IsReadOnly="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border Background="{Binding ClusterColor, Converter={StaticResource ColorToBrushConverter}}">
+                                <!-- Внутренний контент вашей ячейки -->
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridComboBoxColumn x:Name="dgComboBoxRebarBarType" Header="RebarBarType" SelectedItemBinding="{Binding RebarBarType, Mode=TwoWay}" DisplayMemberPath="Name"/>
+                <DataGridTextColumn Header="RebarAnchor" Binding="{Binding RebarAnchor, Mode=TwoWay}" />
+                <DataGridTextColumn Header="PathReinSpacing" Binding="{Binding PathReinSpacing , Mode=TwoWay}" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <Button x:Name="btn_Ok" Content="Ок" HorizontalAlignment="Right" Margin="0,0,125,10" VerticalAlignment="Bottom" Width="100" Height="25" Click="btn_Ok_Click" Grid.Row="2" Grid.Column="1"/>
+        <Button x:Name="btn_Cancel" Content="Отмена" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="100" Height="25" Click="btn_Cancel_Click" Grid.Row="2" Grid.Column="1"/>
     </Grid>
 </Window>

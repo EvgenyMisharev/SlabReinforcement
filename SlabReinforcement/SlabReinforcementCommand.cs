@@ -1,4 +1,5 @@
 ﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using System;
@@ -16,10 +17,14 @@ namespace SlabReinforcement
             Document doc = commandData.Application.ActiveUIDocument.Document;
             Selection sel = commandData.Application.ActiveUIDocument.Selection;
 
-            var importInstance = new FilteredElementCollector(doc)
-                .OfClass(typeof(ImportInstance))
-                .WhereElementIsNotElementType()
-                .FirstElement() as ImportInstance;
+            //Выбор плит для армирования
+            FloorSelectionFilter selFilter = new FloorSelectionFilter();
+            Reference selSlab = sel.PickObject(ObjectType.Element, selFilter, "Выберите плиту!");
+            Floor floor = doc.GetElement(selSlab) as Floor;
+
+            ImportInstanceSelectionFilter importInstanceSelectionFilter = new ImportInstanceSelectionFilter();
+            Reference selImportInstance = sel.PickObject(ObjectType.Element, importInstanceSelectionFilter, "Выберите DWG подложку!");
+            ImportInstance importInstance = doc.GetElement(selImportInstance) as ImportInstance;
             Transform transform = importInstance.GetTransform();
 
             IList<PointColorItem> pointColorItemList = new List<PointColorItem>();
@@ -57,12 +62,67 @@ namespace SlabReinforcement
                     }
                 }
             }
+            //Список типов арматуры
+            List<RebarBarType> rebarBarTypesList = new FilteredElementCollector(doc)
+                .OfClass(typeof(RebarBarType))
+                .Cast<RebarBarType>()
+                .OrderBy(rbt => rbt.Name, new AlphanumComparatorFastString())
+                .ToList();
+            if (rebarBarTypesList.Count == 0)
+            {
+                TaskDialog.Show("Revit", "В вашем проекте отсутствует Несущая арматура. Используйте шаблон КЖ.");
+                return Result.Cancelled;
+            }
+            //Формы
+            List<RebarShape> rebarShapeList = new FilteredElementCollector(doc)
+                .OfClass(typeof(RebarShape))
+                .Cast<RebarShape>()
+                .OrderBy(rs => rs.Name, new AlphanumComparatorFastString())
+                .ToList();
+            if (rebarShapeList.Count == 0)
+            {
+                TaskDialog.Show("Revit", "В вашем проекте отсутствуют Формы арматурных стержней. Используйте шаблон КЖ.");
+                return Result.Cancelled;
+            }
+            //Список типов арматуры по траектории
+            List<PathReinforcementType> pathReinforcementTypeList = new FilteredElementCollector(doc)
+                .OfClass(typeof(PathReinforcementType))
+                .WhereElementIsElementType()
+                .Cast<PathReinforcementType>()
+                .OrderBy(rbt => rbt.Name, new AlphanumComparatorFastString())
+                .ToList();
+            if (pathReinforcementTypeList.Count == 0)
+            {
+                TaskDialog.Show("Revit", "В вашем проекте отсутствуют типы армирования по траектории.");
+                return Result.Cancelled;
+            }
+            ElementId defaultHookTypeId = ElementId.InvalidElementId;
+
             pointColorItemList = pointColorItemList.Distinct(new PointColorItemComparer()).ToList();
-            SlabReinforcementWPF slabReinforcementWPF = new SlabReinforcementWPF(pointColorItemList);
+            SlabReinforcementWPF slabReinforcementWPF = new SlabReinforcementWPF(pointColorItemList, rebarBarTypesList, rebarShapeList);
             slabReinforcementWPF.ShowDialog();
             if (slabReinforcementWPF.DialogResult != true)
             {
                 return Result.Cancelled;
+            }
+            List<PathRebarItem> pathRebarItems = slabReinforcementWPF.PathRebarItems.ToList();
+            using (Transaction t = new Transaction(doc))
+            {
+                t.Start("Армирование плит");
+                foreach (PathRebarItem pathRebarItem in pathRebarItems)
+                {
+                    Curve curve = Line.CreateBound(new XYZ(pathRebarItem.MaxX, pathRebarItem.MaxY, 0), new XYZ(pathRebarItem.MaxX, pathRebarItem.MinY, 0)) as Curve;
+                    List<Curve> curves = new List<Curve>() { curve };
+                    PathReinforcement.Create(doc
+                        , floor
+                        , curves
+                        , false
+                        , pathReinforcementTypeList.First().Id
+                        , pathRebarItem.RebarBarType.Id
+                        , defaultHookTypeId
+                        , defaultHookTypeId);
+                }
+                t.Commit();
             }
 
             return Result.Succeeded;

@@ -85,6 +85,7 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -193,9 +194,19 @@
     </When>
   </Choose>
   <ItemGroup>
+    <Compile Include="AlphanumComparatorFastString.cs" />
     <Compile Include="ColorItem.cs" />
+    <Compile Include="ColorToBrushConverter.cs" />
+    <Compile Include="FloorSelectionFilter.cs" />
+    <Compile Include="ImportInstanceSelectionFilter.cs" />
+    <Compile Include="PathRebarItem.cs" />
     <Compile Include="PointColorItemComparer.cs" />
     <Compile Include="PointColorItem.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="SimplePoint.cs" />
     <Compile Include="SlabReinforcementCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -216,6 +227,15 @@
     <PackageReference Include="Dbscan.RBush">
       <Version>3.0.0</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\citrus.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

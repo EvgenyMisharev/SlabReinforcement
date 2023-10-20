@@ -1,6 +1,8 @@
-﻿using Dbscan.RBush;
+﻿using Autodesk.Revit.DB.Structure;
+using Dbscan.RBush;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,10 +15,21 @@ namespace SlabReinforcement
     public partial class SlabReinforcementWPF : Window
     {
         IList<PointColorItem> PointColorItemList;
-        public SlabReinforcementWPF(IList<PointColorItem> pointColorItemList)
+        public ObservableCollection<PathRebarItem> PathRebarItems { get; set; }
+        List<RebarBarType> RebarBarTypesList;
+        List<RebarShape> RebarShapeList;
+        public SlabReinforcementWPF(IList<PointColorItem> pointColorItemList
+            , List<RebarBarType> rebarBarTypesList
+            , List<RebarShape> rebarShapeList)
         {
             PointColorItemList = pointColorItemList;
+            PathRebarItems = new ObservableCollection<PathRebarItem>();
+            RebarBarTypesList = rebarBarTypesList;
+            RebarShapeList = rebarShapeList;
             InitializeComponent();
+
+            dataGrid.ItemsSource = PathRebarItems;
+            dgComboBoxRebarBarType.ItemsSource = RebarBarTypesList;
 
             List<Color> colorList = new List<Color>();
             // Отобразите точки на холсте
@@ -27,10 +40,10 @@ namespace SlabReinforcement
                 {
                     colorList.Add(wpfColor);
                 }
-                double centerX = pointItem.Point.X; 
-                double centerY = pointItem.Point.Y; 
-                double radiusX = 0.5; 
-                double radiusY = 0.5; 
+                double centerX = pointItem.Point.X;
+                double centerY = pointItem.Point.Y;
+                double radiusX = 0.5;
+                double radiusY = 0.5;
 
                 Ellipse ellipse = new Ellipse
                 {
@@ -57,6 +70,7 @@ namespace SlabReinforcement
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
             pointCanvas.Children.Clear();
+            PathRebarItems.Clear();
             List<ColorItem> selectedColorsForIgnor = colorListBox.Items.Cast<ColorItem>().Where(ci => ci.IsSelected == true).ToList();
             foreach (var pointItem in PointColorItemList)
             {
@@ -87,9 +101,37 @@ namespace SlabReinforcement
         }
         private void button_Click(object sender, RoutedEventArgs e)
         {
-            //pointCanvas.Children.Clear();
-            List<PointColorItem> pointColorItemFilteredList = new List<PointColorItem>();
+            pointCanvas.Children.Clear();
+            PathRebarItems.Clear();
             List<ColorItem> selectedColorsForIgnor = colorListBox.Items.Cast<ColorItem>().Where(ci => ci.IsSelected == true).ToList();
+            foreach (var pointItem in PointColorItemList)
+            {
+                ColorItem findColorItem = selectedColorsForIgnor.FirstOrDefault(si => si.Color.Color.R.ToString() == pointItem.Color.Red.ToString()
+                && si.Color.Color.G.ToString() == pointItem.Color.Green.ToString()
+                && si.Color.Color.B.ToString() == pointItem.Color.Blue.ToString());
+                if (findColorItem == null)
+                {
+                    Color wpfColor = Color.FromRgb(pointItem.Color.Red, pointItem.Color.Green, pointItem.Color.Blue);
+                    double centerX = pointItem.Point.X;
+                    double centerY = pointItem.Point.Y;
+                    double radiusX = 0.5;
+                    double radiusY = 0.5;
+
+                    Ellipse ellipse = new Ellipse
+                    {
+                        Width = radiusX * 2,
+                        Height = radiusY * 2,
+                        Fill = new SolidColorBrush(wpfColor),
+                    };
+
+                    Canvas.SetLeft(ellipse, centerX - radiusX);
+                    Canvas.SetTop(ellipse, centerY - radiusY);
+
+                    pointCanvas.Children.Add(ellipse);
+                }
+            }
+
+            List<PointColorItem> pointColorItemFilteredList = new List<PointColorItem>();
             foreach (PointColorItem pointItem in PointColorItemList)
             {
                 ColorItem findColorItem = selectedColorsForIgnor.FirstOrDefault(si => si.Color.Color.R.ToString() == pointItem.Color.Red.ToString()
@@ -103,11 +145,14 @@ namespace SlabReinforcement
 
             IList<SimplePoint> data = pointColorItemFilteredList.Select(point => new SimplePoint(point.Point.X, point.Point.Y)).ToList();
 
+            double.TryParse(textBox_Epsilon.Text, out double epsilon);
+            int.TryParse(textBox_MinimumPointsPerCluster.Text, out int minimumPointsPerCluster);
             var clusters = DbscanRBush.CalculateClusters(
                data,
-               epsilon: 800 / 304.8,
-               minimumPointsPerCluster: 6);
+               epsilon: epsilon / 304.8,
+               minimumPointsPerCluster: minimumPointsPerCluster);
 
+            RebarShape rebarShape = RebarShapeList.FirstOrDefault(rs => rs.Name == "");
             // Создайте экземпляр класса Random
             Random random = new Random();
             for (int i = 0; i < clusters.Clusters.Count; i++)
@@ -119,25 +164,6 @@ namespace SlabReinforcement
                     byte green = (byte)random.Next(256);
                     byte blue = (byte)random.Next(256);
                     Color randomColor = Color.FromRgb(red, green, blue);
-                    //foreach (SimplePoint p in cluster.Objects)
-                    //{
-                    //    double centerX = p.Point.X;
-                    //    double centerY = p.Point.Y;
-                    //    double radiusX = 0.5;
-                    //    double radiusY = 0.5;
-
-                    //    Ellipse ellipse = new Ellipse
-                    //    {
-                    //        Width = radiusX * 2,
-                    //        Height = radiusY * 2,
-                    //        Fill = new SolidColorBrush(randomColor),
-                    //    };
-
-                    //    Canvas.SetLeft(ellipse, centerX - radiusX);
-                    //    Canvas.SetTop(ellipse, centerY - radiusY);
-
-                    //    pointCanvas.Children.Add(ellipse);
-                    //}
 
                     double minX = cluster.Objects.Min(p => p.Point.X);
                     double minY = cluster.Objects.Min(p => p.Point.Y);
@@ -185,6 +211,21 @@ namespace SlabReinforcement
                     pointCanvas.Children.Add(bottomLine);
                     pointCanvas.Children.Add(leftLine);
                     pointCanvas.Children.Add(rightLine);
+
+                    PathRebarItem pathRebarItem = new PathRebarItem
+                    {
+                        ClusterColor = randomColor,
+                        MinX = minX,
+                        MinY = minY,
+                        MaxX = maxX,
+                        MaxY = maxY,
+                        RebarBarType = RebarBarTypesList.First(),
+                        RebarAnchor = 600,
+                        PathReinSpacing = 200,
+                        PathReinLength = 2000,
+                        RebarShape = rebarShape
+                    };
+                    PathRebarItems.Add(pathRebarItem);
                 }
             }
         }
@@ -199,6 +240,30 @@ namespace SlabReinforcement
             mat.ScaleAt(scale, scale, pos1.X, pos1.Y);
             matTrans.Matrix = mat;
             e.Handled = true;
+        }
+        private void btn_Ok_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = true;
+            Close();
+        }
+        private void btn_Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+        private void SquareColumnsReinforcementAutoWPF_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter || e.Key == Key.Space)
+            {
+                DialogResult = true;
+                Close();
+            }
+
+            else if (e.Key == Key.Escape)
+            {
+                DialogResult = false;
+                Close();
+            }
         }
     }
 }
