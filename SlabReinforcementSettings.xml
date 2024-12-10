@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<SlabReinforcementSettings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ConcreteClass>B20</ConcreteClass>
+  <AdjacentElementsTolerance>50</AdjacentElementsTolerance>
+  <ZoneMergeTolerance>600</ZoneMergeTolerance>
+  <SelectedReinforcementDirection>Низ Y</SelectedReinforcementDirection>
+  <ColorSettings>
+    <ColorReinforcementSettings>
+      <Color>RGB(0, 255, 0)</Color>
+      <RebarTypeName>ø12</RebarTypeName>
+      <Spacing>200</Spacing>
+      <IsSelected>true</IsSelected>
+    </ColorReinforcementSettings>
+    <ColorReinforcementSettings>
+      <Color>RGB(255, 255, 255)</Color>
+      <RebarTypeName>3 Вр1</RebarTypeName>
+      <Spacing>200</Spacing>
+      <IsSelected>false</IsSelected>
+    </ColorReinforcementSettings>
+    <ColorReinforcementSettings>
+      <Color>RGB(0, 255, 255)</Color>
+      <RebarTypeName>ø16</RebarTypeName>
+      <Spacing>200</Spacing>
+      <IsSelected>true</IsSelected>
+    </ColorReinforcementSettings>
+  </ColorSettings>
+</SlabReinforcementSettings>

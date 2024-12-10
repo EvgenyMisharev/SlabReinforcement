@@ -8,21 +8,21 @@ using System.Threading.Tasks;
 
 namespace SlabReinforcement
 {
-    class ImportInstanceSelectionFilter: ISelectionFilter
+    class ImportInstanceSelectionFilter : ISelectionFilter
     {
-		public bool AllowElement(Element elem)
-		{
+        public bool AllowElement(Element elem)
+        {
 
-			if (elem is ImportInstance)
-			{
-				return true;
-			}
-			return false;
-		}
+            if (elem is ImportInstance)
+            {
+                return true;
+            }
+            return false;
+        }
 
-		public bool AllowReference(Reference reference, XYZ position)
-		{
-			return false;
-		}
-	}
+        public bool AllowReference(Reference reference, XYZ position)
+        {
+            return false;
+        }
+    }
 }

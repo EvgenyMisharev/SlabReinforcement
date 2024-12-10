@@ -8,21 +8,21 @@ using System.Threading.Tasks;
 
 namespace SlabReinforcement
 {
-	class FloorSelectionFilter : ISelectionFilter
-	{
-		public bool AllowElement(Element elem)
-		{
+    class FloorSelectionFilter : ISelectionFilter
+    {
+        public bool AllowElement(Element elem)
+        {
 
-			if (elem is Floor)
-			{
-				return true;
-			}
-			return false;
-		}
+            if (elem is Floor)
+            {
+                return true;
+            }
+            return false;
+        }
 
-		public bool AllowReference(Reference reference, XYZ position)
-		{
-			return false;
-		}
-	}
+        public bool AllowReference(Reference reference, XYZ position)
+        {
+            return false;
+        }
+    }
 }
