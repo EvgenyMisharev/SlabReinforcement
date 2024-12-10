@@ -2,16 +2,11 @@
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
-using netDxf.Entities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.PerformanceData;
 using System.Linq;
-using System.Net;
-using System.Reflection;
 using System.Threading.Tasks;
-using System.Windows.Shapes;
 using Line = Autodesk.Revit.DB.Line;
 
 namespace SlabReinforcement
@@ -42,8 +37,11 @@ namespace SlabReinforcement
                 Floor = doc.GetElement(selSlab) as Floor;
 
                 // Выбор DWG-подложки
+#if R2019 || R2020 || R2021
                 ScaleFactor = UnitUtils.ConvertToInternalUnits(1, DisplayUnitType.DUT_METERS);
-
+#else
+                ScaleFactor = UnitUtils.ConvertToInternalUnits(1, UnitTypeId.Meters);
+#endif
                 ImportInstanceSelectionFilter importInstanceSelectionFilter = new ImportInstanceSelectionFilter();
                 Reference selImportInstance = sel.PickObject(ObjectType.Element, importInstanceSelectionFilter, "Выберите DWG подложку!");
                 ImportInstance importInstance = doc.GetElement(selImportInstance) as ImportInstance;
@@ -55,7 +53,7 @@ namespace SlabReinforcement
             }
             catch
             {
-                return Result.Cancelled; 
+                return Result.Cancelled;
             }
 
 
@@ -175,7 +173,7 @@ namespace SlabReinforcement
             SlabReinforcementWPF statsWindow = new SlabReinforcementWPF(groupedByColor, availableRebarTypes);
             if (statsWindow.ShowDialog() == true)
             {
-                 selectedColors = statsWindow.GetSelectedColors();
+                selectedColors = statsWindow.GetSelectedColors();
             }
             else
             {
@@ -343,12 +341,20 @@ namespace SlabReinforcement
 
                         if (line.Any())
                         {
+#if R2019 || R2020 || R2021
                             // Вычисляем площадь армирования для каждого элемента линии
                             var maxReinforcementFace = line
                                 .OrderByDescending(face => CalculateReinforcementAreaPerMeter(face.RebarType.BarDiameter, face.Spacing))
                                 .First();
-
                             double maxReinforcementArea = CalculateReinforcementAreaPerMeter(maxReinforcementFace.RebarType.BarDiameter, maxReinforcementFace.Spacing);
+#else
+                            // Вычисляем площадь армирования для каждого элемента линии
+                            var maxReinforcementFace = line
+                                .OrderByDescending(face => CalculateReinforcementAreaPerMeter(face.RebarType.BarNominalDiameter, face.Spacing))
+                                .First();
+                            double maxReinforcementArea = CalculateReinforcementAreaPerMeter(maxReinforcementFace.RebarType.BarNominalDiameter, maxReinforcementFace.Spacing);
+#endif
+
                             Color maxReinforcementColor = maxReinforcementFace.FaceColor;
 
                             LineData lineData = new LineData
@@ -503,7 +509,12 @@ namespace SlabReinforcement
 
                 // Получаем класс бетона
                 string concreteClass = ConcreteClass; // Параметр класса бетона
+#if R2019 || R2020 || R2021
                 double barDiameter = UnitUtils.ConvertFromInternalUnits(cluster.RebarType.BarDiameter, DisplayUnitType.DUT_MILLIMETERS);
+#else
+                double barDiameter = UnitUtils.ConvertFromInternalUnits(cluster.RebarType.BarNominalDiameter, UnitTypeId.Millimeters);
+#endif
+
 
                 Guid steelGradeGuid = new Guid("32a47c7f-e91d-4a8e-bf24-927cb679b4d1");
                 double steelGrade = cluster.RebarType.get_Parameter(steelGradeGuid).AsDouble();
@@ -518,14 +529,22 @@ namespace SlabReinforcement
                 double distance = (cluster.MaxX - cluster.MinX) + 2 * anchorageLength / 304.8;
 
                 // Переводим длину в миллиметры
+#if R2019 || R2020 || R2021
                 double distanceInMillimeters = UnitUtils.ConvertFromInternalUnits(distance, DisplayUnitType.DUT_MILLIMETERS);
+#else
+                double distanceInMillimeters = UnitUtils.ConvertFromInternalUnits(distance, UnitTypeId.Millimeters);
+#endif
 
                 // Округляем длину до ближайшего указанного инкремента (например, 10 мм)
                 double increment = 10.0; // Укажите инкремент
                 double roundedDistanceInMillimeters = Math.Ceiling(distanceInMillimeters / increment) * increment;
 
                 // Конвертируем округленную длину обратно в футы
+#if R2019 || R2020 || R2021
                 double roundedDistance = UnitUtils.ConvertToInternalUnits(roundedDistanceInMillimeters, DisplayUnitType.DUT_MILLIMETERS);
+#else
+                double roundedDistance = UnitUtils.ConvertToInternalUnits(roundedDistanceInMillimeters, UnitTypeId.Millimeters);
+#endif
 
                 // Смещаем арматуру на разницу между округленной и исходной длиной
                 double offset = (roundedDistance - distance) / 2.0; // Половина разницы
@@ -577,7 +596,11 @@ namespace SlabReinforcement
                         Parameter spacingParameter = pathReinforcement.get_Parameter(BuiltInParameter.PATH_REIN_SPACING);
                         if (spacingParameter != null && !spacingParameter.IsReadOnly)
                         {
+#if R2019 || R2020 || R2021
                             spacingParameter.Set(UnitUtils.ConvertToInternalUnits(cluster.Spacing, DisplayUnitType.DUT_MILLIMETERS));
+#else
+                            spacingParameter.Set(UnitUtils.ConvertToInternalUnits(cluster.Spacing, UnitTypeId.Millimeters));
+#endif
                         }
 
                         // Устанавливаем длину арматуры
@@ -627,12 +650,19 @@ namespace SlabReinforcement
 
                         if (line.Any())
                         {
+#if R2019 || R2020 || R2021
                             // Вычисляем площадь армирования для каждого элемента линии
                             var maxReinforcementFace = line
                                 .OrderByDescending(face => CalculateReinforcementAreaPerMeter(face.RebarType.BarDiameter, face.Spacing))
                                 .First();
-
                             double maxReinforcementArea = CalculateReinforcementAreaPerMeter(maxReinforcementFace.RebarType.BarDiameter, maxReinforcementFace.Spacing);
+#else
+                            // Вычисляем площадь армирования для каждого элемента линии
+                            var maxReinforcementFace = line
+                                .OrderByDescending(face => CalculateReinforcementAreaPerMeter(face.RebarType.BarNominalDiameter, face.Spacing))
+                                .First();
+                            double maxReinforcementArea = CalculateReinforcementAreaPerMeter(maxReinforcementFace.RebarType.BarNominalDiameter, maxReinforcementFace.Spacing);
+#endif
                             Color maxReinforcementColor = maxReinforcementFace.FaceColor;
 
                             LineData lineData = new LineData
@@ -787,7 +817,11 @@ namespace SlabReinforcement
 
                 // Получаем класс бетона
                 string concreteClass = ConcreteClass; // Параметр класса бетона
+#if R2019 || R2020 || R2021
                 double barDiameter = UnitUtils.ConvertFromInternalUnits(cluster.RebarType.BarDiameter, DisplayUnitType.DUT_MILLIMETERS);
+#else
+                double barDiameter = UnitUtils.ConvertFromInternalUnits(cluster.RebarType.BarNominalDiameter, UnitTypeId.Millimeters);
+#endif
 
                 Guid steelGradeGuid = new Guid("32a47c7f-e91d-4a8e-bf24-927cb679b4d1");
                 double steelGrade = cluster.RebarType.get_Parameter(steelGradeGuid).AsDouble();
@@ -802,15 +836,22 @@ namespace SlabReinforcement
                 double distance = (cluster.MaxY - cluster.MinY) + 2 * anchorageLength / 304.8;
 
                 // Переводим длину в миллиметры
+#if R2019 || R2020 || R2021
                 double distanceInMillimeters = UnitUtils.ConvertFromInternalUnits(distance, DisplayUnitType.DUT_MILLIMETERS);
+#else
+                double distanceInMillimeters = UnitUtils.ConvertFromInternalUnits(distance, UnitTypeId.Millimeters);
+#endif
 
                 // Округляем длину до ближайшего указанного инкремента (например, 10 мм)
                 double increment = 10.0; // Укажите инкремент
                 double roundedDistanceInMillimeters = Math.Ceiling(distanceInMillimeters / increment) * increment;
 
                 // Конвертируем округленную длину обратно в футы
+#if R2019 || R2020 || R2021
                 double roundedDistance = UnitUtils.ConvertToInternalUnits(roundedDistanceInMillimeters, DisplayUnitType.DUT_MILLIMETERS);
-
+#else
+                double roundedDistance = UnitUtils.ConvertToInternalUnits(roundedDistanceInMillimeters, UnitTypeId.Millimeters);
+#endif
                 // Смещаем арматуру на разницу между округленной и исходной длиной
                 double offset = (roundedDistance - distance) / 2.0; // Половина разницы
 
@@ -861,7 +902,11 @@ namespace SlabReinforcement
                         Parameter spacingParameter = pathReinforcement.get_Parameter(BuiltInParameter.PATH_REIN_SPACING);
                         if (spacingParameter != null && !spacingParameter.IsReadOnly)
                         {
+#if R2019 || R2020 || R2021
                             spacingParameter.Set(UnitUtils.ConvertToInternalUnits(cluster.Spacing, DisplayUnitType.DUT_MILLIMETERS));
+#else
+                            spacingParameter.Set(UnitUtils.ConvertToInternalUnits(cluster.Spacing, UnitTypeId.Millimeters));
+#endif
                         }
 
                         // Устанавливаем длину арматуры
