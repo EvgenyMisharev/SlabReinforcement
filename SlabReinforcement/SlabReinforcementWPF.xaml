@@ -7,7 +7,7 @@
         MaxWidth="600" 
         WindowStyle="SingleBorderWindow" 
         Icon="Resources/citrus.ico" 
-        ResizeMode="NoResize" 
+        ResizeMode="CanResize" 
         WindowStartupLocation="CenterScreen"
         KeyDown="Window_KeyDown">
 
@@ -23,13 +23,17 @@
 
         <!-- Группы настроек -->
         <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1.3*" />
                 <ColumnDefinition Width="2*" />
             </Grid.ColumnDefinitions>
 
             <!-- Группа для выбора направления армирования -->
-            <GroupBox Header="Выбор направления армирования" Grid.Column="0" Margin="5">
+            <GroupBox Header="Выбор направления армирования" Grid.Column="0" Grid.Row="0" Margin="5">
                 <UniformGrid Rows="2" Columns="2" Margin="10,5,10,5">
                     <RadioButton x:Name="RadioButton_LowerX" Content="Низ X" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5" />
                     <RadioButton x:Name="RadioButton_LowerY" Content="Низ Y" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5" />
@@ -38,9 +42,8 @@
                 </UniformGrid>
             </GroupBox>
 
-
             <!-- Группа для параметров допусков и класса бетона -->
-            <GroupBox Header="Параметры допусков и класса бетона" Grid.Column="1" Margin="5">
+            <GroupBox Header="Параметры допусков и класса бетона" Grid.Column="1" Grid.Row="0" Margin="5">
                 <Grid Margin="10,5,10,5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -60,6 +63,25 @@
 
                     <Label Content="Допуск для объединения зон (мм):" Grid.Row="2" VerticalAlignment="Center" Height="25" />
                     <TextBox x:Name="TextBox_ZoneMergeTolerance" Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" Margin="5,5,5,5" Text="600"  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="25" />
+                </Grid>
+            </GroupBox>
+
+            <!-- Группа для метода округления -->
+            <GroupBox Header="Метод округления" Grid.ColumnSpan="2" Grid.Row="1" Margin="5">
+                <Grid Margin="10,5,10,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Радиокнопка "До ближайшего значения" с полем ввода -->
+                    <StackPanel Orientation="Horizontal" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <RadioButton x:Name="RadioButton_RoundIncrement" Content="До ближайшего значения" IsChecked="True" GroupName="RoundingMethod" VerticalAlignment="Center" Margin="5" />
+                        <TextBox x:Name="TextBox_RoundIncrement" Text="10" Width="50" Margin="5" VerticalAlignment="Center" Height="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Радиокнопка "По нарезке" -->
+                    <RadioButton x:Name="RadioButton_RoundCutLengths" Content="По нарезке" GroupName="RoundingMethod" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5" />
                 </Grid>
             </GroupBox>
         </Grid>

@@ -14,6 +14,8 @@ namespace SlabReinforcement
         public string AdjacentElementsTolerance { get; set; }
         public string ZoneMergeTolerance { get; set; }
         public string SelectedReinforcementDirection { get; set; }
+        public bool UseCutLengths { get; set; }
+        public string RoundIncrement { get; set; }
         public List<ColorReinforcementSettings> ColorSettings { get; set; } = new List<ColorReinforcementSettings>();
 
         private static string GetSettingsFilePath()
@@ -38,7 +40,9 @@ namespace SlabReinforcement
                 ConcreteClass = "B20",
                 AdjacentElementsTolerance = "50",
                 ZoneMergeTolerance = "600",
-                SelectedReinforcementDirection = "Низ X"
+                SelectedReinforcementDirection = "Низ X",
+                UseCutLengths = false,
+                RoundIncrement = "10"
             };
         }
 

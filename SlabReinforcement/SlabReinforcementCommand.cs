@@ -23,6 +23,10 @@ namespace SlabReinforcement
         double AdjacentElementsTolerance;
         double ZoneMergeTolerance;
         string SelectedReinforcementDirection;
+
+        public bool UseCutLengths;
+        public string RoundIncrement;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             // Основной код
@@ -185,6 +189,9 @@ namespace SlabReinforcement
             AdjacentElementsTolerance = double.TryParse(statsWindow.AdjacentElementsTolerance, out double adjacentTolerance) ? adjacentTolerance : 50.0;
             ZoneMergeTolerance = double.TryParse(statsWindow.ZoneMergeTolerance, out double zoneTolerance) ? zoneTolerance : 600.0;
             SelectedReinforcementDirection = statsWindow.SelectedReinforcementDirection;
+
+            UseCutLengths = statsWindow.UseCutLengths;
+            RoundIncrement = statsWindow.RoundIncrement;
 
             List<FiniteElementFace> filteredFaces = null;
             if (selectedColors != null && selectedColors.Any())
@@ -530,14 +537,12 @@ namespace SlabReinforcement
 
                 // Переводим длину в миллиметры
 #if R2019 || R2020 || R2021
-                double distanceInMillimeters = UnitUtils.ConvertFromInternalUnits(distance, DisplayUnitType.DUT_MILLIMETERS);
+                double distanceInMillimeters = Math.Round(UnitUtils.ConvertFromInternalUnits(distance, DisplayUnitType.DUT_MILLIMETERS));
 #else
-                double distanceInMillimeters = UnitUtils.ConvertFromInternalUnits(distance, UnitTypeId.Millimeters);
+                double distanceInMillimeters = Math.Round(UnitUtils.ConvertFromInternalUnits(distance, UnitTypeId.Millimeters));
 #endif
 
-                // Округляем длину до ближайшего указанного инкремента (например, 10 мм)
-                double increment = 10.0; // Укажите инкремент
-                double roundedDistanceInMillimeters = Math.Ceiling(distanceInMillimeters / increment) * increment;
+                double roundedDistanceInMillimeters = RoundDistance(distanceInMillimeters);
 
                 // Конвертируем округленную длину обратно в футы
 #if R2019 || R2020 || R2021
@@ -807,7 +812,7 @@ namespace SlabReinforcement
 
                 // Находим верхнюю линию кластера
                 LineData topLine = cluster.Lines
-                    .OrderBy(line => line.MinY) // Сортируем по минимальной Y-координате
+                    .OrderByDescending(line => line.MaxY) // Сортируем по максимальной Y-координате
                     .FirstOrDefault();
 
                 if (topLine == null)
@@ -820,7 +825,7 @@ namespace SlabReinforcement
 #if R2019 || R2020 || R2021
                 double barDiameter = UnitUtils.ConvertFromInternalUnits(cluster.RebarType.BarDiameter, DisplayUnitType.DUT_MILLIMETERS);
 #else
-                double barDiameter = UnitUtils.ConvertFromInternalUnits(cluster.RebarType.BarNominalDiameter, UnitTypeId.Millimeters);
+        double barDiameter = UnitUtils.ConvertFromInternalUnits(cluster.RebarType.BarNominalDiameter, UnitTypeId.Millimeters);
 #endif
 
                 Guid steelGradeGuid = new Guid("32a47c7f-e91d-4a8e-bf24-927cb679b4d1");
@@ -828,40 +833,40 @@ namespace SlabReinforcement
 
                 double anchorageLength = CalculateAnchorageLength(barDiameter, concreteClass, steelGrade); // Метод вычисления длины анкеровки
 
-                // Смещаем зону вверх на длину анкеровки
+                // Определяем границы зоны по оси Y
                 XYZ p1 = new XYZ(cluster.MinX, cluster.MaxY + anchorageLength / 304.8, 0);
                 XYZ p2 = new XYZ(cluster.MaxX, cluster.MaxY + anchorageLength / 304.8, 0);
 
                 // Увеличиваем длину зоны на две длины анкеровки
                 double distance = (cluster.MaxY - cluster.MinY) + 2 * anchorageLength / 304.8;
 
-                // Переводим длину в миллиметры
+                // Переводим длину в миллиметры и округляем
 #if R2019 || R2020 || R2021
-                double distanceInMillimeters = UnitUtils.ConvertFromInternalUnits(distance, DisplayUnitType.DUT_MILLIMETERS);
+                double distanceInMillimeters = Math.Round(UnitUtils.ConvertFromInternalUnits(distance, DisplayUnitType.DUT_MILLIMETERS));
 #else
-                double distanceInMillimeters = UnitUtils.ConvertFromInternalUnits(distance, UnitTypeId.Millimeters);
+        double distanceInMillimeters = Math.Round(UnitUtils.ConvertFromInternalUnits(distance, UnitTypeId.Millimeters));
 #endif
 
-                // Округляем длину до ближайшего указанного инкремента (например, 10 мм)
-                double increment = 10.0; // Укажите инкремент
-                double roundedDistanceInMillimeters = Math.Ceiling(distanceInMillimeters / increment) * increment;
+                double roundedDistanceInMillimeters = RoundDistance(distanceInMillimeters);
 
                 // Конвертируем округленную длину обратно в футы
 #if R2019 || R2020 || R2021
                 double roundedDistance = UnitUtils.ConvertToInternalUnits(roundedDistanceInMillimeters, DisplayUnitType.DUT_MILLIMETERS);
 #else
-                double roundedDistance = UnitUtils.ConvertToInternalUnits(roundedDistanceInMillimeters, UnitTypeId.Millimeters);
+        double roundedDistance = UnitUtils.ConvertToInternalUnits(roundedDistanceInMillimeters, UnitTypeId.Millimeters);
 #endif
-                // Смещаем арматуру на разницу между округленной и исходной длиной
-                double offset = (roundedDistance - distance) / 2.0; // Половина разницы
 
-                // Корректируем кривые арматуры перед созданием зоны
-                p1 = new XYZ(p1.X, p1.Y - offset, p1.Z);
-                p2 = new XYZ(p2.X, p2.Y - offset, p2.Z);
+                // Корректируем положение арматуры с учётом разницы между округленной и исходной длиной
+                double offset = (roundedDistance - distance) / 2.0;
+
+                p1 = new XYZ(p1.X, p1.Y + offset, p1.Z);
+                p2 = new XYZ(p2.X, p2.Y + offset, p2.Z);
 
                 // Создаём кривые для армирования
-                List<Curve> curves = new List<Curve>();
-                curves.Add(Line.CreateBound(p1, p2));
+                List<Curve> curves = new List<Curve>
+        {
+            Line.CreateBound(p1, p2)
+        };
 
                 if (curves.Count == 0)
                 {
@@ -905,7 +910,7 @@ namespace SlabReinforcement
 #if R2019 || R2020 || R2021
                             spacingParameter.Set(UnitUtils.ConvertToInternalUnits(cluster.Spacing, DisplayUnitType.DUT_MILLIMETERS));
 #else
-                            spacingParameter.Set(UnitUtils.ConvertToInternalUnits(cluster.Spacing, UnitTypeId.Millimeters));
+                    spacingParameter.Set(UnitUtils.ConvertToInternalUnits(cluster.Spacing, UnitTypeId.Millimeters));
 #endif
                         }
 
@@ -923,7 +928,6 @@ namespace SlabReinforcement
                 }
             }
         }
-
 
         private double CalculateReinforcementAreaPerMeter(double diameterFeet, double spacingMm)
         {
@@ -1096,6 +1100,30 @@ namespace SlabReinforcement
 
             // Возвращаем длину анкеровки
             return diameterData[barDiameter];
+        }
+        private double RoundDistance(double distanceInMm)
+        {
+            if (UseCutLengths)
+            {
+                // Нарезка длин
+                List<double> cutLengths = new List<double> { 9750, 8775, 7800, 6825, 5850, 4875, 3900, 2925, 2340, 1950, 1670, 1460, 1300, 1170 };
+                foreach (var length in cutLengths.OrderBy(l => l))
+                {
+                    if (distanceInMm <= length)
+                        return length;
+                }
+                // Округление по инкременту
+                double increment = double.TryParse(RoundIncrement, out double parsedIncrement) ? parsedIncrement : 10.0;
+                double roundedDistanceMm = Math.Ceiling(distanceInMm / increment) * increment;
+                return roundedDistanceMm;
+            }
+            else
+            {
+                // Округление по инкременту
+                double increment = double.TryParse(RoundIncrement, out double parsedIncrement) ? parsedIncrement : 10.0;
+                double roundedDistanceMm = Math.Ceiling(distanceInMm / increment) * increment;
+                return roundedDistanceMm;
+            }
         }
     }
 }

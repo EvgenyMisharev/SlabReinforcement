@@ -3,14 +3,10 @@
   <ConcreteClass>B20</ConcreteClass>
   <AdjacentElementsTolerance>50</AdjacentElementsTolerance>
   <ZoneMergeTolerance>600</ZoneMergeTolerance>
-  <SelectedReinforcementDirection>Низ Y</SelectedReinforcementDirection>
+  <SelectedReinforcementDirection>Низ X</SelectedReinforcementDirection>
+  <UseCutLengths>true</UseCutLengths>
+  <RoundIncrement>10</RoundIncrement>
   <ColorSettings>
-    <ColorReinforcementSettings>
-      <Color>RGB(0, 255, 0)</Color>
-      <RebarTypeName>ø12</RebarTypeName>
-      <Spacing>200</Spacing>
-      <IsSelected>true</IsSelected>
-    </ColorReinforcementSettings>
     <ColorReinforcementSettings>
       <Color>RGB(255, 255, 255)</Color>
       <RebarTypeName>3 Вр1</RebarTypeName>
@@ -18,8 +14,26 @@
       <IsSelected>false</IsSelected>
     </ColorReinforcementSettings>
     <ColorReinforcementSettings>
+      <Color>RGB(0, 255, 0)</Color>
+      <RebarTypeName>ø12</RebarTypeName>
+      <Spacing>200</Spacing>
+      <IsSelected>true</IsSelected>
+    </ColorReinforcementSettings>
+    <ColorReinforcementSettings>
       <Color>RGB(0, 255, 255)</Color>
       <RebarTypeName>ø16</RebarTypeName>
+      <Spacing>200</Spacing>
+      <IsSelected>true</IsSelected>
+    </ColorReinforcementSettings>
+    <ColorReinforcementSettings>
+      <Color>RGB(255, 127, 0)</Color>
+      <RebarTypeName>ø20</RebarTypeName>
+      <Spacing>200</Spacing>
+      <IsSelected>true</IsSelected>
+    </ColorReinforcementSettings>
+    <ColorReinforcementSettings>
+      <Color>RGB(0, 0, 76)</Color>
+      <RebarTypeName>ø25</RebarTypeName>
       <Spacing>200</Spacing>
       <IsSelected>true</IsSelected>
     </ColorReinforcementSettings>

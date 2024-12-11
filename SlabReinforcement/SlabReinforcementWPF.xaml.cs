@@ -28,6 +28,8 @@ namespace SlabReinforcement
         public string AdjacentElementsTolerance;
         public string ZoneMergeTolerance;
         public string SelectedReinforcementDirection;
+        public bool UseCutLengths;
+        public string RoundIncrement;
 
         private SlabReinforcementSettings SettingsItem;
 
@@ -52,6 +54,11 @@ namespace SlabReinforcement
                 RadioButton_LowerY.IsChecked = true;
             else if (SettingsItem.SelectedReinforcementDirection == "Верх Y")
                 RadioButton_UpperY.IsChecked = true;
+
+            // Настройка метода округления
+            RadioButton_RoundIncrement.IsChecked = !SettingsItem.UseCutLengths;
+            RadioButton_RoundCutLengths.IsChecked = SettingsItem.UseCutLengths;
+            TextBox_RoundIncrement.Text = SettingsItem.RoundIncrement;
 
             // Инициализация арматуры и восстановление цветовых настроек
             foreach (var stat in colorStats)
@@ -104,6 +111,12 @@ namespace SlabReinforcement
 
             SettingsItem.SelectedReinforcementDirection = SelectedReinforcementDirection;
 
+            // Сохраняем настройки метода округления
+            UseCutLengths = RadioButton_RoundCutLengths.IsChecked == true;
+            SettingsItem.UseCutLengths = UseCutLengths;
+
+            RoundIncrement = TextBox_RoundIncrement.Text;
+            SettingsItem.RoundIncrement = RoundIncrement;
 
             // Сохраняем настройки для каждого цвета
             SettingsItem.ColorSettings.Clear();
