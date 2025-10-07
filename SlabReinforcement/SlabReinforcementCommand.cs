@@ -5,7 +5,9 @@ using Autodesk.Revit.UI.Selection;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Line = Autodesk.Revit.DB.Line;
 
@@ -29,6 +31,12 @@ namespace SlabReinforcement
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            try
+            {
+                _ = GetPluginStartInfo();
+            }
+            catch { }
+
             // Основной код
             Document doc = commandData.Application.ActiveUIDocument.Document;
             Selection sel = commandData.Application.ActiveUIDocument.Selection;
@@ -560,6 +568,8 @@ namespace SlabReinforcement
 
                 // Создаём кривые для армирования
                 List<Curve> curves = new List<Curve>();
+                if (p1.DistanceTo(p2) < 0.00328084) continue;
+
                 curves.Add(Line.CreateBound(p1, p2));
 
                 if (curves.Count == 0)
@@ -953,23 +963,23 @@ namespace SlabReinforcement
                     {
                         { 240, new Dictionary<double, double>
                             {
-                                { 6, 250 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 240 },
-                                { 16, 270 }, { 18, 300 }, { 20, 340 }, { 22, 370 }, { 25, 420 },
-                                { 28, 470 }, { 30, 500 }, { 32, 540 }, { 36, 600 }
+                                { 6, 290 }, { 8, 390 }, { 10, 480 }, { 12, 580 }, { 14, 670 },
+                                { 16, 770 }, { 18, 860 }, { 20, 960 }, { 22, 1060 }, { 25, 1200 },
+                                { 28, 1340 }, { 32, 1530 }, { 36, 1920 } , { 40, 2130 }
                             }
                         },
                         { 400, new Dictionary<double, double>
                             {
-                                { 6, 200 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 240 },
-                                { 16, 270 }, { 18, 300 }, { 20, 330 }, { 22, 370 }, { 25, 420 },
-                                { 28, 470 }, { 30, 500 }, { 32, 530 }, { 36, 600 }
+                                { 6, 290 }, { 8, 380 }, { 10, 480 }, { 12, 570 }, { 14, 670 },
+                                { 16, 760 }, { 18, 860 }, { 20, 950 }, { 22, 1050 }, { 25, 1190 },
+                                { 28, 1330 }, { 32, 1520 }, { 36, 1900 }, { 40, 2110 }
                             }
                         },
                         { 500, new Dictionary<double, double>
                             {
-                                { 6, 200 }, { 8, 200 }, { 10, 210 }, { 12, 250 }, { 14, 290 },
-                                { 16, 330 }, { 18, 370 }, { 20, 410 }, { 22, 450 }, { 25, 510 },
-                                { 28, 570 }, { 30, 610 }, { 32, 650 }, { 36, 730 }
+                                { 6, 350 }, { 8, 470 }, { 10, 580 }, { 12, 700 }, { 14, 820 },
+                                { 16, 930 }, { 18, 1050 }, { 20, 1160 }, { 22, 1280 }, { 25, 1450 },
+                                { 28, 1630 }, { 32, 1860 }, { 36, 2320 }, { 40, 2580 }
                             }
                         }
                     }
@@ -979,23 +989,23 @@ namespace SlabReinforcement
                     {
                         { 240, new Dictionary<double, double>
                             {
-                                { 6, 250 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 210 },
-                                { 16, 240 }, { 18, 270 }, { 20, 300 }, { 22, 330 }, { 25, 380 },
-                                { 28, 420 }, { 30, 450 }, { 32, 480 }, { 36, 540 }
+                                { 6, 240 }, { 8, 320 }, { 10, 400 }, { 12, 480 }, { 14, 560 },
+                                { 16, 640 }, { 18, 720 }, { 20, 800 }, { 22, 880 }, { 25, 1000 },
+                                { 28, 1120 }, { 32, 1280 }, { 36, 1600 }, { 40, 1770 }
                             }
                         },
                         { 400, new Dictionary<double, double>
                             {
-                                { 6, 200 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 210 },
-                                { 16, 240 }, { 18, 270 }, { 20, 300 }, { 22, 330 }, { 25, 380 },
-                                { 28, 420 }, { 30, 450 }, { 32, 480 }, { 36, 540 }
+                                { 6, 240 }, { 8, 320 }, { 10, 400 }, { 12, 480 }, { 14, 560 },
+                                { 16, 640 }, { 18, 710 }, { 20, 790 }, { 22, 870 }, { 25, 990 },
+                                { 28, 1110 }, { 32, 1270}, { 36, 1580 }, { 40, 1760 }
                             }
                         },
                         { 500, new Dictionary<double, double>
                             {
-                                { 6, 200 }, { 8, 200 }, { 10, 200 }, { 12, 210 }, { 14, 240 },
-                                { 16, 270 }, { 18, 310 }, { 20, 340 }, { 22, 370 }, { 25, 430 },
-                                { 28, 480 }, { 30, 510 }, { 32, 540 }, { 36, 610 }
+                                { 6, 290 }, { 8, 390 }, { 10, 490 }, { 12, 580 }, { 14, 680 },
+                                { 16, 780 }, { 18, 870 }, { 20, 970 }, { 22, 1070 }, { 25, 1210 },
+                                { 28, 1360 }, { 32, 1550 }, { 36, 1940 }, { 40, 2150 }
                             }
                         }
                     }
@@ -1005,23 +1015,23 @@ namespace SlabReinforcement
                     {
                         { 240, new Dictionary<double, double>
                             {
-                                { 6, 250 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 210 },
-                                { 16, 240 }, { 18, 270 }, { 20, 300 }, { 22, 330 }, { 25, 380 },
-                                { 28, 420 }, { 30, 450 }, { 32, 480 }, { 36, 540 }
+                                { 6, 210 }, { 8, 280 }, { 10, 350 }, { 12, 410 }, { 14, 480 },
+                                { 16, 550 }, { 18, 620 }, { 20, 690 }, { 22, 750 }, { 25, 860 },
+                                { 28, 960 }, { 32, 1100 }, { 36, 1370 }, { 40, 1520 }
                             }
                         },
                         { 400, new Dictionary<double, double>
                             {
-                                { 6, 200 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 210 },
-                                { 16, 240 }, { 18, 270 }, { 20, 300 }, { 22, 330 }, { 25, 380 },
-                                { 28, 420 }, { 30, 450 }, { 32, 480 }, { 36, 540 }
+                                { 6, 210 }, { 8, 270 }, { 10, 340 }, { 12, 410 }, { 14, 480 },
+                                { 16, 540 }, { 18, 610 }, { 20, 680 }, { 22, 750 }, { 25, 850 },
+                                { 28, 950 }, { 32, 1090 }, { 36, 1360 }, { 40, 1510 }
                             }
                         },
                         { 500, new Dictionary<double, double>
                             {
-                                { 6, 200 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 210 },
-                                { 16, 240 }, { 18, 270 }, { 20, 300 }, { 22, 330 }, { 25, 380 },
-                                { 28, 420 }, { 30, 450 }, { 32, 480 }, { 36, 540 }
+                                { 6, 250 }, { 8, 340 }, { 10, 420 }, { 12, 500 }, { 14, 580 },
+                                { 16, 670 }, { 18, 750 }, { 20, 830 }, { 22, 920 }, { 25, 1040 },
+                                { 28, 1160 }, { 32, 1330 }, { 36, 1660 }, { 40, 1850 }
                             }
                         }
                     }
@@ -1031,23 +1041,23 @@ namespace SlabReinforcement
                     {
                         { 240, new Dictionary<double, double>
                             {
-                                { 6, 250 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 210 },
-                                { 16, 240 }, { 18, 270 }, { 20, 300 }, { 22, 330 }, { 25, 380 },
-                                { 28, 420 }, { 30, 450 }, { 32, 480 }, { 36, 540 }
+                                { 6, 200 }, { 8, 250 }, { 10, 320 }, { 12, 380 }, { 14, 440 },
+                                { 16, 500 }, { 18, 560 }, { 20, 630 }, { 22, 690 }, { 25, 780 },
+                                { 28, 880 }, { 32, 1000 }, { 36, 1250 }, { 40, 1390 }
                             }
                         },
                         { 400, new Dictionary<double, double>
                             {
-                                { 6, 200 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 210 },
-                                { 16, 240 }, { 18, 270 }, { 20, 300 }, { 22, 330 }, { 25, 380 },
-                                { 28, 420 }, { 30, 450 }, { 32, 480 }, { 36, 540 }
+                                { 6, 200 }, { 8, 250 }, { 10, 310 }, { 12, 370 }, { 14, 440 },
+                                { 16, 480 }, { 18, 560 }, { 20, 620 }, { 22, 680 }, { 25, 780 },
+                                { 28, 870 }, { 32, 990 }, { 36, 1240 }, { 40, 1380 }
                             }
                         },
                         { 500, new Dictionary<double, double>
                             {
-                                { 6, 200 }, { 8, 200 }, { 10, 200 }, { 12, 200 }, { 14, 210 },
-                                { 16, 240 }, { 18, 270 }, { 20, 300 }, { 22, 330 }, { 25, 380 },
-                                { 28, 420 }, { 30, 450 }, { 32, 480 }, { 36, 540 }
+                                { 6, 230 }, { 8, 310 }, { 10, 380 }, { 12, 460 }, { 14, 530 },
+                                { 16, 610 }, { 18, 680 }, { 20, 760 }, { 22, 840 }, { 25, 950 },
+                                { 28, 1060 }, { 30, 1210 }, { 32, 1520 }, { 36, 1690 }, { 40, 1690 }
                             }
                         }
                     }
@@ -1123,6 +1133,37 @@ namespace SlabReinforcement
                 double increment = double.TryParse(RoundIncrement, out double parsedIncrement) ? parsedIncrement : 10.0;
                 double roundedDistanceMm = Math.Ceiling(distanceInMm / increment) * increment;
                 return roundedDistanceMm;
+            }
+        }
+
+        private static async Task GetPluginStartInfo()
+        {
+            // Получаем сборку, в которой выполняется текущий код
+            Assembly thisAssembly = Assembly.GetExecutingAssembly();
+            string assemblyName = "SlabReinforcement";
+            string assemblyNameRus = "Зоны усиления плит";
+            string assemblyFolderPath = Path.GetDirectoryName(thisAssembly.Location);
+
+            int lastBackslashIndex = assemblyFolderPath.LastIndexOf("\\");
+            string dllPath = assemblyFolderPath.Substring(0, lastBackslashIndex + 1) + "PluginInfoCollector\\PluginInfoCollector.dll";
+
+            Assembly assembly = Assembly.LoadFrom(dllPath);
+            Type type = assembly.GetType("PluginInfoCollector.InfoCollector");
+
+            if (type != null)
+            {
+                // Создание экземпляра класса
+                object instance = Activator.CreateInstance(type);
+
+                // Получение метода CollectPluginUsageAsync
+                var method = type.GetMethod("CollectPluginUsageAsync");
+
+                if (method != null)
+                {
+                    // Вызов асинхронного метода через reflection
+                    Task task = (Task)method.Invoke(instance, new object[] { assemblyName, assemblyNameRus });
+                    await task;  // Ожидание завершения асинхронного метода
+                }
             }
         }
     }
